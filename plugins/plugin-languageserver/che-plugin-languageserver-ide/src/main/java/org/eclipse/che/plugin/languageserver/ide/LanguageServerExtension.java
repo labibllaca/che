@@ -58,8 +58,6 @@ public class LanguageServerExtension {
   public LanguageServerExtension(
       LanguageRegexesInitializer languageRegexesInitializer,
       LanguageDescriptionInitializer languageDescriptionInitializer,
-      DefaultHoverProviderInitializer defaultHoverProviderInitializer,
-      DefaultOccurrencesProviderInitializer defaultOccurrencesProviderInitializer,
       EventBus eventBus,
       AppContext appContext,
       ShowMessageJsonRpcReceiver showMessageJsonRpcReceiver,
@@ -69,8 +67,6 @@ public class LanguageServerExtension {
         e -> {
           languageRegexesInitializer.initialize();
           languageDescriptionInitializer.initialize();
-          defaultOccurrencesProviderInitializer.initialize();
-          defaultHoverProviderInitializer.initialize();
           showMessageJsonRpcReceiver.subscribe();
           publishDiagnosticsReceiver.subscribe();
         });
@@ -78,8 +74,6 @@ public class LanguageServerExtension {
     if (appContext.getWorkspace().getStatus() == RUNNING) {
       languageRegexesInitializer.initialize();
       languageDescriptionInitializer.initialize();
-      defaultOccurrencesProviderInitializer.initialize();
-      defaultHoverProviderInitializer.initialize();
       showMessageJsonRpcReceiver.subscribe();
       publishDiagnosticsReceiver.subscribe();
     }

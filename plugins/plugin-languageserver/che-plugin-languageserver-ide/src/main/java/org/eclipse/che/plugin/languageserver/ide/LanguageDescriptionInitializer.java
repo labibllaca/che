@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Set;
 import org.eclipse.che.api.languageserver.shared.model.LanguageDescription;
+import org.eclipse.che.ide.api.editor.filetype.DefaultExtensionToMimeTypeMappings;
 import org.eclipse.che.ide.editor.orion.client.OrionContentTypeRegistrant;
 import org.eclipse.che.ide.editor.orion.client.OrionHoverRegistrant;
 import org.eclipse.che.ide.editor.orion.client.OrionOccurrencesRegistrant;
@@ -33,7 +34,10 @@ public class LanguageDescriptionInitializer {
   private final OrionOccurrencesRegistrant orionOccurrencesRegistrant;
   private final OccurrencesProvider occurrencesProvider;
   private final Set<LanguageDescription> languageDescriptions;
+  private final DefaultExtensionToMimeTypeMappings defaultExtensionToMimeTypeMappings;
   private final HoverProvider hoverProvider;
+
+  private boolean initialized = false;
 
   @Inject
   public LanguageDescriptionInitializer(
@@ -42,43 +46,52 @@ public class LanguageDescriptionInitializer {
       OrionOccurrencesRegistrant orionOccurrencesRegistrant,
       HoverProvider hoverProvider,
       OccurrencesProvider occurrencesProvider,
-      Set<LanguageDescription> languageDescriptions) {
+      Set<LanguageDescription> languageDescriptions,
+      DefaultExtensionToMimeTypeMappings defaultExtensionToMimeTypeMappings) {
     this.contentTypeRegistrant = contentTypeRegistrant;
     this.orionHoverRegistrant = orionHoverRegistrant;
     this.orionOccurrencesRegistrant = orionOccurrencesRegistrant;
     this.hoverProvider = hoverProvider;
     this.occurrencesProvider = occurrencesProvider;
     this.languageDescriptions = languageDescriptions;
+    this.defaultExtensionToMimeTypeMappings = defaultExtensionToMimeTypeMappings;
   }
 
   void initialize() {
-    JsArrayString contentTypes = JsArrayString.createArray().cast();
+    if (!initialized) {
+      JsArrayString contentTypes = JsArrayString.createArray().cast();
 
-    for (LanguageDescription languageDescription : languageDescriptions) {
+      // register defaults at first
+      defaultExtensionToMimeTypeMappings.getMimeTypes().forEach(contentTypes::push);
 
-      String mimeType = languageDescription.getMimeType();
-      contentTypes.push(mimeType);
-      OrionContentTypeOverlay contentType = OrionContentTypeOverlay.create();
-      contentType.setId(mimeType);
-      contentType.setName(languageDescription.getLanguageId());
-      contentType.setFileName(
-          languageDescription
-              .getFileNames()
-              .toArray(new String[languageDescription.getFileNames().size()]));
-      contentType.setExtension(
-          languageDescription
-              .getFileExtensions()
-              .toArray(new String[languageDescription.getFileExtensions().size()]));
-      contentType.setExtends("text/plain");
+      for (LanguageDescription languageDescription : languageDescriptions) {
 
-      // highlighting
-      OrionHighlightingConfigurationOverlay config = OrionHighlightingConfigurationOverlay.create();
-      config.setId(languageDescription.getLanguageId() + ".highlighting");
-      config.setContentTypes(mimeType);
-      config.setPatterns(languageDescription.getHighlightingConfiguration());
-      contentTypeRegistrant.registerFileType(contentType, config);
+        String mimeType = languageDescription.getMimeType();
+        contentTypes.push(mimeType);
+        OrionContentTypeOverlay contentType = OrionContentTypeOverlay.create();
+        contentType.setId(mimeType);
+        contentType.setName(languageDescription.getLanguageId());
+        contentType.setFileName(
+            languageDescription
+                .getFileNames()
+                .toArray(new String[languageDescription.getFileNames().size()]));
+        contentType.setExtension(
+            languageDescription
+                .getFileExtensions()
+                .toArray(new String[languageDescription.getFileExtensions().size()]));
+        contentType.setExtends("text/plain");
+
+        // highlighting
+        OrionHighlightingConfigurationOverlay config =
+            OrionHighlightingConfigurationOverlay.create();
+        config.setId(languageDescription.getLanguageId() + ".highlighting");
+        config.setContentTypes(mimeType);
+        config.setPatterns(languageDescription.getHighlightingConfiguration());
+        contentTypeRegistrant.registerFileType(contentType, config);
+      }
+      orionHoverRegistrant.registerHover(contentTypes, hoverProvider);
+      orionOccurrencesRegistrant.registerOccurrencesHandler(contentTypes, occurrencesProvider);
+      initialized = true;
     }
-    orionHoverRegistrant.registerHover(contentTypes, hoverProvider);
-    orionOccurrencesRegistrant.registerOccurrencesHandler(contentTypes, occurrencesProvider);
   }
 }
