@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.selenium.languageserver.php;
 
+import static org.eclipse.che.selenium.core.TestGroup.UNDER_REPAIR;
 import static org.eclipse.che.selenium.core.constant.TestMenuCommandsConstants.Assistant.ASSISTANT;
 import static org.eclipse.che.selenium.core.constant.TestMenuCommandsConstants.Assistant.FIND_PROJECT_SYMBOL;
 import static org.eclipse.che.selenium.core.constant.TestMenuCommandsConstants.Assistant.FIND_REFERENCES;
@@ -120,7 +121,7 @@ public class PhpAssistantFeaturesTest {
     editor.waitTextInHoverPopUpEqualsTo(EXPECTED_HOVER_POPUP_TEXT);
   }
 
-  @Test
+  @Test(groups = UNDER_REPAIR)
   public void findReferenceNodeShouldBeDisplayed() {
     projectExplorer.openItemByPath(PATH_TO_INDEX_PHP);
     editor.waitActive();
@@ -135,7 +136,7 @@ public class PhpAssistantFeaturesTest {
     }
   }
 
-  @Test
+  @Test(groups = UNDER_REPAIR)
   public void signatureShouldBeDisplayed() {
     projectExplorer.openItemByPath(PATH_TO_INDEX_PHP);
     editor.waitActive();
